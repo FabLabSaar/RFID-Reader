@@ -11,14 +11,17 @@ def read_card():
                 if card_reader.auth(card_reader.AUTHENT1A, 8, key, raw_uid) == card_reader.OK:
                     payload = "{}".format(str(card_reader.read(8)))
                     card_reader.stop_crypto1()
-                    result = (tag_type_str, uid_string, payload)
+                    result = {
+                        "TagType" : tag_type_str,
+                        "UID" : uid_string,
+                        "Payload" : payload
+                    }
     return result
 
 def send_data(data):
-    (card_type, uid, payload) = data
-    print("Card Type:\t", card_type)
-    print("Card Uid:\t", uid)
-    print("Payload:\t", payload, '\n')
+    print("Card Type:\t", data["TagType"])
+    print("Card Uid:\t", data["UID"])
+    print("Payload:\t", data["Payload"], '\n')
 
 def blink(count, duration_ms):
     phases = 2 * count - 1
@@ -26,10 +29,19 @@ def blink(count, duration_ms):
         led.value(0 if led.value() > 0 else 1)
         time.sleep_ms(int(duration_ms / phases))
 
-def run()
-    last_data = None
+def run():
+    last_uid = None
+    count = 0
     while True:
         data = read_card()
         if data is not None:
-        send_data(data)
-        blink(3,1500)
+            if data["UID"] is not last_uid:
+                send_data(data)
+                blink(3,1500)
+                last_uid = data["UID"]
+            count = 99
+        if count < 0 and last_uid is not None:
+            last_uid = None
+        else:
+            count -= 1
+            
